@@ -1,0 +1,157 @@
+{% extends 'app/base.html' %}
+{% load static %}
+{% block title %}Buy Now{% endblock title %}
+
+{% block main-content %}
+<div class="container">
+  <div class="row mt-5">
+    <div class="col-sm-6">
+      <h4>Order Summary</h4>
+      <hr>
+      {% for item in cart_items %}
+      <div class="card mb-2">
+        <div class="card-body">
+          <h5>Product: {{item.product.title}}</h5>
+          <p>Quantity: {{item.quantity}}</p>
+          <!--Model Property used here-->
+          <p class="fw-bold">Price: {{item.total_cost}}</p>
+        </div>
+      </div>
+      {% endfor %}
+      <p class="fw-bold">Total Cost + Rs. 70 = {{totalamount}} </p>
+      <small>Term and Condition: Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia, ullam saepe! Iure
+        optio repellat dolor velit, minus rem. Facilis cumque neque numquam laboriosam, accusantium adipisci nisi nihil
+        in et quis?</small>
+    </div>
+
+    <div class="col-sm-4 offset-sm-1">
+      <h4>Select Shipping Address</h4>
+      <hr>
+      <form action="/paymentdone" id="myform">
+        {% for ad in add %}
+        <div class="card">
+          <div class="card-body">
+            <h5>{{ad.name}}</h5>
+            <p>{{ad.locality}}, {{ad.city}}, {{ad.state}}, {{ad.zipcode}}</p>
+          </div>
+        </div>
+        <div class="form-check mt-2 mb-5">
+          <input class="form-check-input" type="radio" name="custid" id="custadd{{forloop.counter}}" value="{{ad.id}}">
+          <label class="form-check-label fw-bold" for="">
+            Address: {{forloop.counter}} </label>
+        </div>
+        {% endfor %}
+        <div class="text-end">
+          <!-- Set up a container element for the button -->
+          <!-- <div id="paypal-button-container">payment</div> this is paypal button me comment out -->
+          <!-- <a href="/pay"><button class=" btn btn-success">Make Payment</button></a> -->
+          <h2 id="paymentAmount" style="display: none;">{{Payment.amount}}</h2>
+          <button id="rzp-button1">Payment</button> 
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock main-content %}
+
+ {% block payment-gateway %}
+<!-- Include the PayPal JavaScript SDK
+   <!-- <button id="rzp-button1">Pay with Razorpay</button>  -->
+      <!-- <button id="rzp-button1">Pay with Razorpay</button>  -->
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function generateOrderId() {
+            // Generate a unique alphanumeric order ID
+            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            var orderId = 'order_';
+            for (var i = 0; i < 10; i++) {
+                orderId += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return orderId;
+  }
+  var paymentAmount = parseFloat(document.getElementById("paymentAmount").innerText)*100;
+  var orderId = generateOrderId();
+  var options = {
+    "key": "rzp_test_w6zCvVY3Omwuwl", // Enter the Key ID generated from the Dashboard
+    "amount": paymentAmount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    "currency": "INR",
+    "name": "Acme Corp",
+    "description": "Test Transaction",
+    "image": "https://example.com/your_logo",
+    "order_id": "{{payment.id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "handler": function (response){
+         window.location.href= "http://localhost:8000/"
+    },
+    "prefill": {
+        "name": "Gaurav Kumar",
+        "email": "gaurav.kumar@example.com",
+        "contact": "9000090000"
+    },
+    "notes": {
+        "address": "Razorpay Corporate Office"
+    },
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+var rzp1 = new Razorpay(options);
+rzp1.on('payment.failed', function (response){
+        alert(response.error.code);
+        alert(response.error.description);
+        alert(response.error.source);
+        alert(response.error.step);
+        alert(response.error.reason);
+        alert(response.error.metadata.order_id);
+        alert(response.error.metadata.payment_id);
+});
+document.getElementById('rzp-button1').onclick = function(e){
+    rzp1.open();
+    e.preventDefault();
+}
+</script>
+{% endblock payment-gateway %} 
+<!-- 
+<script src="https://www.paypal.com/sdk/js?client-id=AQ5hqgwWqgNjGEBsOu3QZ9lYODYzC51miTVix1kZaprTQ5qfsmkJJdmAjgUbca_spPq_eVjHcEvOo9C4&currency=USD"></script>
+
+<script>
+  // Callback function to execute when the PayPal SDK is loaded
+  function initPayPalButtons() {
+    // Render the PayPal button into #paypal-button-container
+    paypal.Buttons({
+      // Set up the transaction
+      createOrder: function (data, actions) {
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              value: '225670.0'
+            }
+          }]
+        });
+      },
+      // Finalize the transaction
+      onApprove: function (data, actions) {
+        return actions.order.capture().then(function (details) {
+          // Show a success message to the buyer
+          alert('Transaction completed by ' + details.payer.name.given_name + '!');
+          document.getElementById("myform").submit();
+        });
+      }
+    }).render('#paypal-button-container');
+  }
+
+  // Check if the PayPal SDK has already loaded
+  if (window.paypal) {
+    // PayPal SDK is already loaded, initialize the buttons
+    initPayPalButtons();
+  } else {
+    // Set up a listener for the SDK load
+    window.addEventListener('paypal-sdk-loaded', function () {
+      // Initialize the PayPal buttons when the SDK is loaded
+      initPayPalButtons();
+    });
+  }
+</script> 
+
+ -->
